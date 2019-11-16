@@ -1,42 +1,62 @@
-var express = require("express");
-var bodyParser = require("body-parser");
+var express = require("express"),
+    bodyParser = require("body-parser"),
+    mongoose = require("mongoose");
+
 var app = express();
 
-app.use(bodyParser.urlencoded({extended: true}));
+mongoose.connect("mongodb://localhost/yelp_camp", {useUnifiedTopology: true, useNewUrlParser: true});
 
+app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
-var campdata = [
-    {name: "Sunny Vale", image: "https://images.unsplash.com/photo-1573840392340-548fbb2447e9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Rainny town", image: "https://images.unsplash.com/photo-1573850863352-688921f4eb0e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Autmy Coral", image: "https://images.unsplash.com/photo-1573843464747-0d506ecb4a5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Sunny Vale", image: "https://images.unsplash.com/photo-1573840392340-548fbb2447e9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Rainny town", image: "https://images.unsplash.com/photo-1573850863352-688921f4eb0e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Autmy Coral", image: "https://images.unsplash.com/photo-1573843464747-0d506ecb4a5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Sunny Vale", image: "https://images.unsplash.com/photo-1573840392340-548fbb2447e9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Rainny town", image: "https://images.unsplash.com/photo-1573850863352-688921f4eb0e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"},
-    {name: "Autmy Coral", image: "https://images.unsplash.com/photo-1573843464747-0d506ecb4a5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60"}
-    
-]
+var campgroundSchema = new mongoose.Schema({
+    name: String,
+    image: String,
+    description: String
+});
+
+var Campground = mongoose.model("Campground", campgroundSchema);
 
 app.get("/", function(req, res){
     res.render("landing");
 });
 
 app.get("/campgrounds", function(req, res){
-    res.render("campgrounds", {campgrounds: campdata});
+    Campground.find({}, function(err, campdata){
+        if(err){
+            console.log(err);
+        }else{
+            res.render("index", {campgrounds: campdata});
+        }
+    });
 });
 
 app.post("/campgrounds", function(req, res){
     var name = req.body.name;
     var image= req.body.image;
-    var newCamp = {name: name, image: image};
-    campdata.push(newCamp);
-    res.redirect("/campgrounds")
+    var description = req.body.description;
+    var newCamp = {name: name, image: image, description: description};
+    Campground.create(newCamp, function(err, newCreated){
+        if(err){
+            console.log(err);
+        }else{
+            res.redirect("/campgrounds")
+        }
+    });
 });
 
 app.get("/campgrounds/new", function(req, res){
     res.render("new");
+});
+
+app.get("/campgrounds/:id", function(req, res){
+    Campground.findById(req.params.id, function(err, foundCampground){
+        if(err){
+            console.log(err);
+        }else{
+            res.render("show", {campground: foundCampground});
+        }
+    });
 });
 
 app.listen(3000, function(){
