@@ -7,11 +7,12 @@ var express = require("express"),
 
 var app = express();
 
-seedDB();
 mongoose.connect("mongodb://localhost/yelp_camp", {useUnifiedTopology: true, useNewUrlParser: true});
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
+app.use(express.static(__dirname + "/public"));
+seedDB();
 
 app.get("/", function(req, res){
     res.render("landing");
@@ -80,7 +81,7 @@ app.post("/campgrounds/:id/comments", function(req, res){
                 }
             });
         }
-    })
+    });
 });
 
 app.listen(3000, function(){
